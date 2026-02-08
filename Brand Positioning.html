@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Positioning Spectrum</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #64748b;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .spectrum-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .dimension-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+
+        .dimension-label {
+            width: 130px;
+            flex-shrink: 0;
+            padding-top: 0.5rem;
+        }
+
+        .dimension-label h3 {
+            font-size: 0.875rem;
+            font-weight: bold;
+            color: #1e293b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .spectrum-wrapper {
+            flex: 1;
+        }
+
+        .example-blocks {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            height: 48px;
+        }
+
+        .example-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: center;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .example-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .example-input:focus {
+            border-color: #64748b;
+        }
+
+        .spectrum-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .spectrum-labels span {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .spectrum-bar {
+            position: relative;
+            height: 48px;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+
+        .spectrum-bar:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .spectrum-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, rgba(255,255,255,0.3) 0%, rgba(0,0,0,0.1) 100%);
+            pointer-events: none;
+        }
+
+        .spectrum-marker {
+            position: absolute;
+            top: 50%;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            pointer-events: none;
+        }
+
+        .position-value {
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        .position-value span {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .instructions {
+            text-align: center;
+            padding-top: 1rem;
+            margin-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .instructions p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Brand Positioning Spectrum</h1>
+            <p>Define your brand's position across key dimensions</p>
+        </div>
+
+        <div class="card">
+            <div class="spectrum-container" id="spectrumContainer"></div>
+            <div class="instructions">
+                <p>Click on any bar to adjust position • Type brand names in the boxes above each spectrum</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dimensions = [
+            { id: 'people', label: 'People', leftLabel: 'Mass', rightLabel: 'Elite/Niche', color: '#FF6B6B', position: 50, examples: ['', '', '', ''] },
+            { id: 'tone', label: 'Tone', leftLabel: 'Playful', rightLabel: 'Serious', color: '#4ECDC4', position: 50, examples: ['', '', '', ''] },
+            { id: 'power', label: 'Power', leftLabel: 'Accessible', rightLabel: 'Authoritative', color: '#45B7D1', position: 50, examples: ['', '', '', ''] },
+            { id: 'time', label: 'Time', leftLabel: 'Timeless', rightLabel: 'Trendy', color: '#FFA07A', position: 50, examples: ['', '', '', ''] },
+            { id: 'innovation', label: 'Innovation', leftLabel: 'Familiar', rightLabel: 'Disruptive', color: '#98D8C8', position: 50, examples: ['', '', '', ''] },
+            { id: 'emotion', label: 'Emotion', leftLabel: 'Rational', rightLabel: 'Emotional', color: '#F7DC6F', position: 50, examples: ['', '', '', ''] },
+            { id: 'price', label: 'Price', leftLabel: 'Budget', rightLabel: 'Premium', color: '#BB8FCE', position: 50, examples: ['', '', '', ''] },
+            { id: 'complexity', label: 'Complexity', leftLabel: 'Simple', rightLabel: 'Sophisticated', color: '#85C1E2', position: 50, examples: ['', '', '', ''] },
+            { id: 'visual', label: 'Visual Style', leftLabel: 'Minimal', rightLabel: 'Maximal', color: '#F8B739', position: 50, examples: ['', '', '', ''] },
+        ];
+
+        const positions = {};
+        dimensions.forEach(d => positions[d.id] = d.position);
+        const examples = {};
+        dimensions.forEach(d => examples[d.id] = d.examples);
+
+        function createDimensionRow(dimension) {
+            const row = document.createElement('div');
+            row.className = 'dimension-row';
+
+            // Label
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'dimension-label';
+            labelDiv.innerHTML = `<h3>${dimension.label}</h3>`;
+
+            // Spectrum wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'spectrum-wrapper';
+
+            // Example blocks
+            const exampleBlocks = document.createElement('div');
+            exampleBlocks.className = 'example-blocks';
+            
+            examples[dimension.id].forEach((example, index) => {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'example-input';
+                input.placeholder = 'Brand name';
+                input.value = example;
+                
+                // Style the input based on whether it has content
+                const updateInputStyle = () => {
+                    if (input.value) {
+                        input.style.backgroundColor = dimension.color;
+                        input.style.color = 'white';
+                        input.style.borderColor = dimension.color;
+                    } else {
+                        input.style.backgroundColor = 'white';
+                        input.style.color = '#64748b';
+                        input.style.borderColor = '#e5e7eb';
+                    }
+                };
+                
+                updateInputStyle();
+                
+                input.addEventListener('input', (e) => {
+                    examples[dimension.id][index] = e.target.value;
+                    updateInputStyle();
+                });
+                
+                exampleBlocks.appendChild(input);
+            });
+
+            // Labels
+            const labels = document.createElement('div');
+            labels.className = 'spectrum-labels';
+            labels.innerHTML = `
+                <span>${dimension.leftLabel}</span>
+                <span>${dimension.rightLabel}</span>
+            `;
+
+            // Bar
+            const bar = document.createElement('div');
+            bar.className = 'spectrum-bar';
+            bar.style.backgroundColor = dimension.color;
+            bar.style.opacity = '0.7';
+
+            // Gradient overlay
+            const gradient = document.createElement('div');
+            gradient.className = 'spectrum-gradient';
+
+            // Marker
+            const marker = document.createElement('div');
+            marker.className = 'spectrum-marker';
+            marker.style.borderColor = dimension.color;
+            marker.style.left = `${positions[dimension.id]}%`;
+
+            // Position value
+            const posValue = document.createElement('div');
+            posValue.className = 'position-value';
+            posValue.innerHTML = `<span>${positions[dimension.id].toFixed(0)}%</span>`;
+
+            // Click handler
+            bar.addEventListener('click', (e) => {
+                const rect = bar.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const newPosition = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                positions[dimension.id] = newPosition;
+                marker.style.left = `${newPosition}%`;
+                posValue.innerHTML = `<span>${newPosition.toFixed(0)}%</span>`;
+            });
+
+            // Hover effects
+            bar.addEventListener('mouseenter', () => {
+                bar.style.opacity = '0.9';
+            });
+
+            bar.addEventListener('mouseleave', () => {
+                bar.style.opacity = '0.7';
+            });
+
+            // Assemble
+            bar.appendChild(gradient);
+            bar.appendChild(marker);
+            wrapper.appendChild(exampleBlocks);
+            wrapper.appendChild(labels);
+            wrapper.appendChild(bar);
+            wrapper.appendChild(posValue);
+            row.appendChild(labelDiv);
+            row.appendChild(wrapper);
+
+            return row;
+        }
+
+        // Initialize
+        const container = document.getElementById('spectrumContainer');
+        dimensions.forEach(dimension => {
+            container.appendChild(createDimensionRow(dimension));
+        });
+    </script>
+</body>
+</html>
