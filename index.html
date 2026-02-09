@@ -240,12 +240,29 @@ const saved = localStorage.getItem(STORAGE_KEY);
 if (saved) {
     try {
         const data = JSON.parse(saved);
-        if (data.ranges) Object.assign(ranges, data.ranges);
-        if (data.examples) Object.assign(examples, data.examples);
+
+        if (data.ranges) {
+            Object.keys(ranges).forEach(id => {
+                if (data.ranges[id]) {
+                    ranges[id].start = data.ranges[id].start ?? ranges[id].start;
+                    ranges[id].end = data.ranges[id].end ?? ranges[id].end;
+                }
+            });
+        }
+
+        if (data.examples) {
+            Object.keys(examples).forEach(id => {
+                if (Array.isArray(data.examples[id])) {
+                    examples[id] = data.examples[id];
+                }
+            });
+        }
+
     } catch (e) {
-        console.warn('Failed to load saved project', e);
+        console.warn('Invalid saved data, ignoring', e);
     }
 }
+
 
 // Save helper
 function saveState() {
@@ -479,4 +496,5 @@ function saveState() {
     </script>
 </body>
 </html>
+
 
