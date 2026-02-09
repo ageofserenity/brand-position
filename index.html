@@ -6,7 +6,7 @@
     <title>Brand Positioning Spectrum</title>
     <style>
         * {
-            margin: 0;
+            margin: 7px 0;
             padding: 0;
             box-sizing: border-box;
         }
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -48,7 +48,7 @@
         .spectrum-container {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 2rem;
         }
 
         .dimension-row {
@@ -58,14 +58,14 @@
         }
 
         .dimension-label {
-            width: 130px;
+            width: 110px;
             flex-shrink: 0;
             padding-top: 0.5rem;
         }
 
         .dimension-label h3 {
-            font-size: 0.875rem;
-            font-weight: bold;
+            font-size: 1rem;
+            font-weight: bolder;
             color: #1e293b;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -73,19 +73,20 @@
 
         .spectrum-wrapper {
             flex: 1;
+            min-width: 0;
         }
 
         .example-blocks {
             display: flex;
             gap: 0.5rem;
             margin-bottom: 1rem;
-            height: 48px;
         }
 
         .example-input {
             flex: 1;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.75rem;
+            min-width: 0;
+            padding: 0.5rem;
+            font-size: 1rem;
             font-weight: 500;
             text-align: center;
             border: 2px solid #e5e7eb;
@@ -105,65 +106,89 @@
         .spectrum-labels {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
-            padding: 0 0.5rem;
+            margin-bottom: 0.75rem;
+            padding: 0 0.25rem;
         }
 
         .spectrum-labels span {
-            font-size: 0.875rem;
+            font-size: 1rem;
             font-weight: 600;
             color: #475569;
         }
 
-        .spectrum-bar {
+        .spectrum-bar-container {
             position: relative;
-            height: 48px;
-            border-radius: 24px;
+            height: 12px;
+            margin-bottom: 1.5rem;
             cursor: pointer;
-            transition: all 0.2s;
-            overflow: hidden;
         }
 
-        .spectrum-bar:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .spectrum-gradient {
+        .spectrum-bar {
             position: absolute;
-            inset: 0;
-            background: linear-gradient(to right, rgba(255,255,255,0.3) 0%, rgba(0,0,0,0.1) 100%);
-            pointer-events: none;
+            height: 31px;
+            border-radius: 20px;
+            width: 100%;
+            opacity: 0.7;
+        }
+
+        .spectrum-range {
+            position: absolute;
+            height: 8px;
+            top: 10.5px;
+            border-radius: 10px;
+            background-color: white;
+            z-index: 1;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .spectrum-marker {
             position: absolute;
-            top: 50%;
-            width: 24px;
-            height: 24px;
+            top: 115%;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: white;
-            border: 4px solid;
+            border: 3px solid;
             transform: translate(-50%, -50%);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s;
-            pointer-events: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            cursor: grab;
+            z-index: 2;
+            transition: box-shadow 0.2s;
+        }
+
+        .spectrum-marker:active {
+            cursor: grabbing;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .spectrum-marker:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
 
         .position-value {
             text-align: center;
             margin-top: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .position-value span {
-            font-size: 0.75rem;
+            font-size: 0.875rem;
             color: #94a3b8;
+        }
+
+        .position-value span:nth-child(2) {
+            flex: 1;
+            text-align: center;
+            min-width: fit-content;
         }
 
         .instructions {
             text-align: center;
-            padding-top: 1rem;
-            margin-top: 1rem;
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
             border-top: 1px solid #e2e8f0;
         }
 
@@ -183,28 +208,69 @@
         <div class="card">
             <div class="spectrum-container" id="spectrumContainer"></div>
             <div class="instructions">
-                <p>Click on any bar to adjust position • Type brand names in the boxes above each spectrum</p>
+                <p>Drag the handles to adjust your brand's range</p>
             </div>
         </div>
     </div>
 
     <script>
+
+// 1. Get project ID from the URL
+const params = new URLSearchParams(window.location.search);
+const projectId = params.get('project') || 'default';
+
+// 2. Create a project-specific storage key
+const STORAGE_KEY = `brand-spectrum-${projectId}`;
+
+// 3. Load saved state (if it exists)
+const saved = localStorage.getItem(STORAGE_KEY);
+if (saved) {
+    const data = JSON.parse(saved);
+    Object.assign(positions, data.positions || {});
+    Object.assign(examples, data.examples || {});
+}
+
+// 4. Save helper (call this whenever data changes)
+function saveState() {
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ positions, examples })
+    );
+}
+
         const dimensions = [
-            { id: 'people', label: 'People', leftLabel: 'Mass', rightLabel: 'Elite/Niche', color: '#FF6B6B', position: 50, examples: ['', '', '', ''] },
-            { id: 'tone', label: 'Tone', leftLabel: 'Playful', rightLabel: 'Serious', color: '#4ECDC4', position: 50, examples: ['', '', '', ''] },
-            { id: 'power', label: 'Power', leftLabel: 'Accessible', rightLabel: 'Authoritative', color: '#45B7D1', position: 50, examples: ['', '', '', ''] },
-            { id: 'time', label: 'Time', leftLabel: 'Timeless', rightLabel: 'Trendy', color: '#FFA07A', position: 50, examples: ['', '', '', ''] },
-            { id: 'innovation', label: 'Innovation', leftLabel: 'Familiar', rightLabel: 'Disruptive', color: '#98D8C8', position: 50, examples: ['', '', '', ''] },
-            { id: 'emotion', label: 'Emotion', leftLabel: 'Rational', rightLabel: 'Emotional', color: '#F7DC6F', position: 50, examples: ['', '', '', ''] },
-            { id: 'price', label: 'Price', leftLabel: 'Budget', rightLabel: 'Premium', color: '#BB8FCE', position: 50, examples: ['', '', '', ''] },
-            { id: 'complexity', label: 'Complexity', leftLabel: 'Simple', rightLabel: 'Sophisticated', color: '#85C1E2', position: 50, examples: ['', '', '', ''] },
-            { id: 'visual', label: 'Visual Style', leftLabel: 'Minimal', rightLabel: 'Maximal', color: '#F8B739', position: 50, examples: ['', '', '', ''] },
+            { id: 'people', label: 'People', leftLabel: 'Mass', rightLabel: 'Elite/Niche', color: '#FF6B6B', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
+            { id: 'tone', label: 'Tone', leftLabel: 'Playful', rightLabel: 'Serious', color: '#4ECDC4', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
+            { id: 'power', label: 'Power', leftLabel: 'Accessible', rightLabel: 'Authoritative', color: '#45B7D1', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
+            { id: 'time', label: 'Time', leftLabel: 'Timeless', rightLabel: 'Trendy', color: '#FFA07A', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
+            { id: 'innovation', label: 'Innovation', leftLabel: 'Familiar', rightLabel: 'Disruptive', color: '#98D8C8', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
+            { id: 'emotion', label: 'Emotion', leftLabel: 'Rational', rightLabel: 'Emotional', color: '#F7DC6F', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
+            { id: 'price', label: 'Price', leftLabel: 'Budget', rightLabel: 'Premium', color: '#BB8FCE', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
+            { id: 'complexity', label: 'Complexity', leftLabel: 'Simple', rightLabel: 'Sophisticated', color: '#85C1E2', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
+            { id: 'visual', label: 'Visual Style', leftLabel: 'Minimal', rightLabel: 'Maximal', color: '#F8B739', rangeStart: 50, rangeEnd: 70, examples: ['', '', '', ''] },
         ];
 
-        const positions = {};
-        dimensions.forEach(d => positions[d.id] = d.position);
+        const ranges = {};
+        dimensions.forEach(d => ranges[d.id] = { start: d.rangeStart, end: d.rangeEnd });
         const examples = {};
         dimensions.forEach(d => examples[d.id] = d.examples);
+
+        function updateRange(dimensionId, rangeBar, startMarker, endMarker, valueDisplay) {
+            const start = ranges[dimensionId].start;
+            const end = ranges[dimensionId].end;
+            
+            rangeBar.style.left = `${start}%`;
+            rangeBar.style.width = `${end - start}%`;
+            startMarker.style.left = `${start}%`;
+            endMarker.style.left = `${end}%`;
+            
+            const rangeWidth = end - start;
+            valueDisplay.innerHTML = `
+                <span>${start.toFixed(0)}%</span>
+                <span>Range: ${rangeWidth.toFixed(0)}%</span>
+                <span>${end.toFixed(0)}%</span>
+            `;
+        }
 
         function createDimensionRow(dimension) {
             const row = document.createElement('div');
@@ -227,10 +293,9 @@
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.className = 'example-input';
-                input.placeholder = 'Brand name';
+                input.placeholder = 'Brand';
                 input.value = example;
                 
-                // Style the input based on whether it has content
                 const updateInputStyle = () => {
                     if (input.value) {
                         input.style.backgroundColor = dimension.color;
@@ -261,52 +326,124 @@
                 <span>${dimension.rightLabel}</span>
             `;
 
-            // Bar
-            const bar = document.createElement('div');
-            bar.className = 'spectrum-bar';
-            bar.style.backgroundColor = dimension.color;
-            bar.style.opacity = '0.7';
+            // Bar container
+            const barContainer = document.createElement('div');
+            barContainer.className = 'spectrum-bar-container';
 
-            // Gradient overlay
-            const gradient = document.createElement('div');
-            gradient.className = 'spectrum-gradient';
+            // Background bar (colored with gradient)
+            const backgroundBar = document.createElement('div');
+            backgroundBar.className = 'spectrum-bar';
+            
+            // Create a lighter version of the color for the gradient
+            const lightenColor = (color, percent) => {
+                const num = parseInt(color.replace("#",""), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+                    (G<255?G<1?0:G:255)*0x100 +
+                    (B<255?B<1?0:B:255))
+                    .toString(16).slice(1);
+            };
+            
+            const lighterColor = lightenColor(dimension.color, 30);
+            backgroundBar.style.background = `linear-gradient(to right, ${lighterColor}, ${dimension.color})`;
 
-            // Marker
-            const marker = document.createElement('div');
-            marker.className = 'spectrum-marker';
-            marker.style.borderColor = dimension.color;
-            marker.style.left = `${positions[dimension.id]}%`;
+            // Range bar (white indicator)
+            const rangeBar = document.createElement('div');
+            rangeBar.className = 'spectrum-range';
 
-            // Position value
+            // Position value display
             const posValue = document.createElement('div');
             posValue.className = 'position-value';
-            posValue.innerHTML = `<span>${positions[dimension.id].toFixed(0)}%</span>`;
 
-            // Click handler
-            bar.addEventListener('click', (e) => {
-                const rect = bar.getBoundingClientRect();
+            // Create markers
+            const startMarker = document.createElement('div');
+            startMarker.className = 'spectrum-marker';
+            startMarker.style.borderColor = dimension.color;
+
+            const endMarker = document.createElement('div');
+            endMarker.className = 'spectrum-marker';
+            endMarker.style.borderColor = dimension.color;
+
+            // Drag functionality
+            let activeMarker = null;
+            
+            const handleMouseDown = (e, isStart) => {
+                e.preventDefault();
+                e.stopPropagation();
+                activeMarker = isStart ? 'start' : 'end';
+            };
+            
+            const handleMouseMove = (e) => {
+                if (!activeMarker) return;
+                
+                const rect = barContainer.getBoundingClientRect();
                 const x = e.clientX - rect.left;
-                const newPosition = Math.max(0, Math.min(100, (x / rect.width) * 100));
-                positions[dimension.id] = newPosition;
-                marker.style.left = `${newPosition}%`;
-                posValue.innerHTML = `<span>${newPosition.toFixed(0)}%</span>`;
-            });
+                let newPosition = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                
+                if (activeMarker === 'start') {
+                    newPosition = Math.min(newPosition, ranges[dimension.id].end - 1);
+                    ranges[dimension.id].start = newPosition;
+                } else {
+                    newPosition = Math.max(newPosition, ranges[dimension.id].start + 1);
+                    ranges[dimension.id].end = newPosition;
+                }
+                
+                updateRange(dimension.id, rangeBar, startMarker, endMarker, posValue);
+            };
+            
+            const handleMouseUp = () => {
+                activeMarker = null;
+            };
+            
+            // Click on bar to move nearest marker
+            const handleBarClick = (e) => {
+                if (activeMarker) return; // Don't interfere with dragging
+                
+                const rect = barContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const clickPosition = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                
+                const start = ranges[dimension.id].start;
+                const end = ranges[dimension.id].end;
+                
+                // Determine which marker is closer to the click
+                const distToStart = Math.abs(clickPosition - start);
+                const distToEnd = Math.abs(clickPosition - end);
+                
+                if (distToStart < distToEnd) {
+                    // Move start marker
+                    const newStart = Math.min(clickPosition, end - 1);
+                    ranges[dimension.id].start = newStart;
+                } else {
+                    // Move end marker
+                    const newEnd = Math.max(clickPosition, start + 1);
+                    ranges[dimension.id].end = newEnd;
+                }
+                
+                updateRange(dimension.id, rangeBar, startMarker, endMarker, posValue);
+            };
+            
+            barContainer.addEventListener('click', handleBarClick);
+            startMarker.addEventListener('mousedown', (e) => handleMouseDown(e, true));
+            endMarker.addEventListener('mousedown', (e) => handleMouseDown(e, false));
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
 
-            // Hover effects
-            bar.addEventListener('mouseenter', () => {
-                bar.style.opacity = '0.9';
-            });
-
-            bar.addEventListener('mouseleave', () => {
-                bar.style.opacity = '0.7';
-            });
+            // Initial update
+            updateRange(dimension.id, rangeBar, startMarker, endMarker, posValue);
 
             // Assemble
-            bar.appendChild(gradient);
-            bar.appendChild(marker);
+            barContainer.appendChild(backgroundBar);
+            barContainer.appendChild(rangeBar);
+            barContainer.appendChild(startMarker);
+            barContainer.appendChild(endMarker);
+            
             wrapper.appendChild(exampleBlocks);
             wrapper.appendChild(labels);
-            wrapper.appendChild(bar);
+            wrapper.appendChild(barContainer);
             wrapper.appendChild(posValue);
             row.appendChild(labelDiv);
             row.appendChild(wrapper);
