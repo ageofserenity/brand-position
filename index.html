@@ -217,26 +217,41 @@ heres the code
 
     <script>
 
-// 1. Get project ID from the URL
+// --- PROJECT STORAGE SETUP ---
 const params = new URLSearchParams(window.location.search);
 const projectId = params.get('project') || 'default';
-
-// 2. Create a project-specific storage key
 const STORAGE_KEY = `brand-spectrum-${projectId}`;
 
-// 3. Load saved state (if it exists)
+// State objects
+const ranges = {};
+const examples = {};
+
+dimensions.forEach(d => {
+    ranges[d.id] = { start: d.rangeStart, end: d.rangeEnd };
+    examples[d.id] = [...d.examples];
+});
+
+
+
+        
+
+// Load saved state
 const saved = localStorage.getItem(STORAGE_KEY);
 if (saved) {
-    const data = JSON.parse(saved);
-    Object.assign(positions, data.positions || {});
-    Object.assign(examples, data.examples || {});
+    try {
+        const data = JSON.parse(saved);
+        if (data.ranges) Object.assign(ranges, data.ranges);
+        if (data.examples) Object.assign(examples, data.examples);
+    } catch (e) {
+        console.warn('Failed to load saved project', e);
+    }
 }
 
-// 4. Save helper (call this whenever data changes)
+// Save helper
 function saveState() {
     localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ positions, examples })
+        JSON.stringify({ ranges, examples })
     );
 }
 
@@ -315,6 +330,7 @@ function saveState() {
                 input.addEventListener('input', (e) => {
                     examples[dimension.id][index] = e.target.value;
                     updateInputStyle();
+                    saveState();
                 });
                 
                 exampleBlocks.appendChild(input);
@@ -394,6 +410,7 @@ function saveState() {
                 }
                 
                 updateRange(dimension.id, rangeBar, startMarker, endMarker, posValue);
+                saveState();
             };
             
             const handleMouseUp = () => {
@@ -426,6 +443,7 @@ function saveState() {
                 }
                 
                 updateRange(dimension.id, rangeBar, startMarker, endMarker, posValue);
+                saveState();
             };
             
             barContainer.addEventListener('click', handleBarClick);
@@ -461,3 +479,4 @@ function saveState() {
     </script>
 </body>
 </html>
+
